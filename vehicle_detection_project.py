@@ -5,7 +5,7 @@ import cv2
 from skimage.feature import hog
 from scipy.ndimage.measurements import label
 
-# Define a function to return HOG features and visualization
+# function to return HOG features and visualization
 def get_hog_features(img, orient, pix_per_cell, cell_per_block, 
                         vis=False, feature_vec=True):
     # Call with two outputs if vis==True
@@ -25,16 +25,16 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                        visualise=vis, feature_vector=feature_vec)
         return features
 
-# Define a function to compute binned color features  
+#  function to compute binned color features  
 def bin_spatial(img, size=(32, 32)):
     # Use cv2.resize().ravel() to create the feature vector
     features = cv2.resize(img, size).ravel() 
     # Return the feature vector
     return features
 
-# Define a function to compute color histogram features 
+# function to compute color histogram features 
 # NEED TO CHANGE bins_range if reading .png files with mpimg!
-def color_hist(img, nbins=32, bins_range=(0, 256)):
+def color_hist(img, nbins=32, bins_range=(0, 1)):
     # Compute the histogram of the color channels separately
     channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
     channel2_hist = np.histogram(img[:,:,1], bins=nbins, range=bins_range)
@@ -44,8 +44,7 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
-# Define a function to extract features from a list of images
-# Have this function call bin_spatial() and color_hist()
+# function to extract features from a list of images
 def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                         hist_bins=32, orient=9, 
                         pix_per_cell=8, cell_per_block=2, hog_channel=0,
@@ -96,7 +95,7 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
     # Return list of feature vectors
     return features
     
-# Define a function that takes an image,
+# function that takes an image,
 # start and stop positions in both x and y, 
 # window size (x and y dimensions),  
 # and overlap fraction (for both x and y)
@@ -141,7 +140,7 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     # Return the list of windows
     return window_list
 
-# Define a function to draw bounding boxes
+# function to draw bounding boxes
 def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Make a copy of the image
     imcopy = np.copy(img)
@@ -152,9 +151,7 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Return the image copy with boxes drawn
     return imcopy
 
-# Define a function to extract features from a single image window
-# This function is very similar to extract_features()
-# just for a single image rather than list of images
+# function to extract features from a single image window
 def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
                         hist_bins=32, orient=9, 
                         pix_per_cell=8, cell_per_block=2, hog_channel=0,
@@ -201,11 +198,11 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
     #9) Return concatenated array of features
     return np.concatenate(img_features)
 
-# Define a function you will pass an image 
+# function you will pass an image 
 # and the list of windows to be searched (output of slide_windows())
 def search_windows(img, windows, clf, scaler, color_space='RGB', 
                     spatial_size=(32, 32), hist_bins=32, 
-                    hist_range=(0, 256), orient=9, 
+                    hist_range=(0, 1), orient=9, 
                     pix_per_cell=8, cell_per_block=2, 
                     hog_channel=0, spatial_feat=True, 
                     hist_feat=True, hog_feat=True):
@@ -244,7 +241,7 @@ def convert_color(img, conv='RGB2YCrCb'):
         return cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 
 
-# Define a single function that can extract features using hog sub-sampling and make predictions
+# function that can extract features using hog sub-sampling and make predictions
 def find_cars(img, ystart, ystop, scale):
     
     img = img.astype(np.float32)/255
@@ -375,13 +372,13 @@ from sklearn.cross_validation import train_test_split
 cars = glob.glob('data_set/vehicles/*/*.png')
 notcars = glob.glob('data_set/non-vehicles/*/*.png', recursive=True)
 
-### TODO: Tweak these parameters and see how the results change.
+
 color_space = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 9  # HOG orientations
 pix_per_cell = 8 # HOG pixels per cell
 cell_per_block = 2 # HOG cells per block
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
-spatial_size = (16, 16) # Spatial binning dimensions
+spatial_size = (32, 32) # Spatial binning dimensions
 hist_bins = 16    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
@@ -408,7 +405,7 @@ X_scaler = StandardScaler().fit(X)
 # Apply the scaler to X
 scaled_X = X_scaler.transform(X)
 
-# Define the labels vector
+# the labels vector
 y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
 
@@ -458,19 +455,27 @@ window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)
 
 plt.imshow(window_img)
 '''
+
+
 def process_image(image):
     
-    box_list = find_cars(image, 400, 460, .75)
-    box_list += find_cars(image, 400, 500, 1.5)
-    box_list += find_cars(image, 400, 600, 2)
-    box_list += find_cars(image, 400, 656, 3)
+    global previous_box_list
+    
+    box_list = find_cars(image, 400, 650, 2.0)
+    box_list += find_cars(image, 400, 650, 1.5)
+    box_list += find_cars(image, 400, 600, 1.0)
+    box_list += find_cars(image, 400, 550, 0.75)
+    
+    
+    boxes =  previous_box_list + box_list
+    
 
     heat = np.zeros_like(image[:,:,0]).astype(np.float)
     # Add heat to each box in box list
-    heat = add_heat(heat,box_list)
+    heat = add_heat(heat,boxes)
     
     # Apply threshold to help remove false positives
-    heat = apply_threshold(heat,3)
+    heat = apply_threshold(heat,4)
 
     # Visualize the heatmap when displaying    
     heatmap = np.clip(heat, 0, 255)
@@ -479,15 +484,18 @@ def process_image(image):
     labels = label(heatmap)
     draw_img = draw_labeled_bboxes(np.copy(image), labels)
     
+    previous_box_list = box_list
+    
     return draw_img
 
 
 image = mpimg.imread('test_images/test1.jpg')
+previous_box_list = []
 result = process_image(image)
 plt.imshow(result)
 
 
-# Import everything needed to edit/save/watch video clips
+# Import to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
 
 
